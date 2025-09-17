@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Distributor Page</title>
+</head>
+<body>
+  <h1>Distributor Portal</h1>
+  <form id="distForm">
+    <label>Enter Batch ID: <input type="text" id="batchId"></label><br><br>
+    <label>Status:
+      <select id="status">
+        <option value="In Transit">In Transit</option>
+        <option value="Delivered">Delivered</option>
+        <option value="Received">Received</option>
+      </select>
+    </label><br><br>
+    <button type="submit">Update</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script>
+    let batchDB = {}; // for demo, same fake backend here
+
+    document.getElementById("distForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      let id = document.getElementById("batchId").value;
+      let status = document.getElementById("status").value;
+
+      if(batchDB[id]) {
+        batchDB[id].status = status;
+        document.getElementById("result").innerHTML =
+          `<p>Batch ${id} updated to: <b>${status}</b></p>`;
+      } else {
+        document.getElementById("result").innerHTML = `<p style="color:red">Batch not found!</p>`;
+      }
+
+      console.log("DB:", batchDB);
+    });
+  </script>
+</body>
+</html>

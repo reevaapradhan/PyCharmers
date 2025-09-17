@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FarmChain MVP</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      display: flex;
+    }
+    /* Sidebar */
+    nav {
+      width: 220px;
+      background: #2c3e50;
+      color: white;
+      height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    nav h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+    nav button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      background: #34495e;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 5px;
+      text-align: left;
+    }
+    nav button:hover {
+      background: #1abc9c;
+    }
+    /* Main content */
+    main {
+      flex-grow: 1;
+      padding: 20px;
+    }
+    section { display: none; }
+    section.active { display: block; }
+    #qrcode { margin-top: 15px; }
+    .card {
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 8px;
+      background: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <nav>
+    <h2>🌱 FarmChain</h2>
+    <button onclick="showPage('farmer')">👩‍🌾 Farmer</button>
+    <button onclick="showPage('distributor')">🚚 Distributor</button>
+    <button onclick="showPage('consumer')">🛒 Consumer</button>
+  </nav>
+
+  <!-- Main content -->
+  <main>
+    <!-- Farmer Page -->
+    <section id="farmer" class="active">
+      <h2>Farmer Portal</h2>
+      <form id="farmerForm">
+        <label>Crop Name: <input type="text" id="crop"></label><br><br>
+        <label>Quantity: <input type="number" id="quantity"></label><br><br>
+        <label>Harvest Date: <input type="date" id="harvest"></label><br><br>
+        <button type="submit">Submit</button>
+      </form>
+      <div id="farmerResult" class="card"></div>
+      <div id="qrcode"></div>
+    </section>
+
+    <!-- Distributor Page -->
+    <section id="distributor">
+      <h2>Distributor Portal</h2>
+      <form id="distForm">
+        <label>Enter Batch ID: <input type="text" id="distBatchId"></label><br><br>
+        <label>Status:
+          <select id="status">
+            <option value="In Transit">In Transit</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Received">Received</option>
+          </select>
+        </label><br><br>
+        <button type="submit">Update</button>
+      </form>
+      <div id="distResult" class="card"></div>
+    </section>
+
+    <!-- Consumer Page -->
+    <section id="consumer">
+      <h2>Consumer Portal</h2>
+      <form id="consumerForm">
+        <label>Enter/Scan Batch ID: <input type="text" id="consBatchId"></label>
+        <button type="submit">Check</button>
+      </form>
+      <div id="timeline" class="card"></div>
+    </section>
+  </main>
+
+  <script>
+    // Fake backend database (shared)
+    let batchDB = {};
+
+    // Navigation logic
+    function showPage(page) {
+      document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
+      document.getElementById(page).classList.add("active");
+    }
+
+    // Farmer form
+    document.getElementById("farmerForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      let crop = document.getElementById("crop").value;
+      let qty = document.getElementById("quantity").value;
+      let date = document.getElementById("harvest").value;
+
+      if(!crop || !qty || !date){
+        alert("Please fill all fields!");
+        return;
+      }
+
+      let batchId = "BATCH" + Date.now();
+      batchDB[batchId] = { crop, qty, date, status: "Created" };
+
+      document.getElementById("farmerResult").innerHTML =
+        `<p><b>Batch Created:</b> ${batchId}</p>
+         <p>Crop: ${crop}, Quantity: ${qty}, Date: ${date}</p>`;
+
+      document.getElementById("qrcode").innerHTML = "";
+      new QRCode(document.getElementById("qrcode"), batchId);
+
+      console.log("DB:", batchDB);
+    });
+
+    // Distributor form
+    document.getElementById("distForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      let id = document.getElementById("distBatchId").value;
+      let status = document.getElementById("status").value;
+
+      if(batchDB[id]) {
+        batchDB[id].status = status;
+        document.getElementById("distResult").innerHTML =
+          `<p>✅ Batch <b>${id}</b> updated to: <b>${status}</b></p>`;
+      } else {
+        document.getElementById("distResult").innerHTML =
+          `<p style="color:red">❌ Batch not found!</p>`;
+      }
+      console.log("DB:", batchDB);
+    });
+
+    // Consumer form
+    document.getElementById("consumerForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      let id = document.getElementById("consBatchId").value;
+
+      if(batchDB[id]) {
+        let b = batchDB[id];
+        document.getElementById("timeline").innerHTML = `
+          <h3>Batch Details</h3>
+          <p><b>Crop:</b> ${b.crop}</p>
+          <p><b>Quantity:</b> ${b.qty}</p>
+          <p><b>Harvest Date:</b> ${b.date}</p>
+          <p><b>Status:</b> ${b.status}</p>
+          <p><i>Powered by Blockchain (Txn: 0x123abc...dummy)</i></p>
+        `;
+      } else {
+        document.getElementById("timeline").innerHTML =
+          `<p style="color:red">❌ Batch not found!</p>`;
+      }
+    });
+  </script>
+</body>
+</html>
